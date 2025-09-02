@@ -72,8 +72,8 @@ export default function Page() {
       <BackgroundDecor />
       
       {/* 顶部导航栏 */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md py-4 px-6 flex justify-between items-center h-16 shadow-sm">
-        <h1 className={cn("text-3xl font-bold gradient-text", titleFont.className)}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md py-4 px-6 flex justify-between items-center shadow-sm">
+        <h1 className={cn("text-3xl font-bold gradient-text leading-normal", titleFont.className)}>
           Daddy&Puppy
         </h1>
         
