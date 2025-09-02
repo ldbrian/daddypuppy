@@ -93,7 +93,7 @@ importers:
         specifier: 1.1.6
         version: 1.1.6(@types/react-dom@19.1.8(@types/react@19.1.11))(@types/react@19.1.11)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@upstash/redis':
-        specifier: latest
+        specifier: ^1.35.3
         version: 1.35.3
       class-variance-authority:
         specifier: ^0.7.1
