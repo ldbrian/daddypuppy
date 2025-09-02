@@ -35,7 +35,7 @@ function getRedisClient() {
 // GET - 读取数据
 export async function GET(request: NextRequest, { params }: { params: { key: string } }) {
   try {
-    const { key } = params
+    const { key } = await params
     const client = getRedisClient()
 
     if (!client) {
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: { key: str
 // POST - 写入数据
 export async function POST(request: NextRequest, { params }: { params: { key: string } }) {
   try {
-    const { key } = params
+    const { key } = await params
     const body = await request.json()
     const { data } = body
 
