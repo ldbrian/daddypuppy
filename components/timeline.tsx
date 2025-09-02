@@ -622,7 +622,7 @@ export default function Timeline({
                         className={cn(
                           "p-3 sm:p-4 border-l-2 sm:border-l-4",
                           moodBorder,
-                          item.pinned && "ring-2 ring-yellow-200 bg-yellow-50/30", // 置顶时的特殊背景
+                          item.pinned && "ring-2 ring-yellow-200 bg-white", // 置顶时的特殊背景改为纯白色
                         )}
                       >
                         <div className="flex items-start justify-between gap-2 sm:gap-3">

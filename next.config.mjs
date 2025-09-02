@@ -22,11 +22,7 @@ const nextConfig = {
       };
     }
 
-    config.resolve.alias = {
-      ...config.resolve.alias,
-    };
-    
-    // 关键配置：忽略系统路径
+    // 添加更详细的路径忽略配置
     config.watchOptions = {
       ignored: [
         "**/node_modules/**",
