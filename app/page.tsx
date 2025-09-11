@@ -15,6 +15,8 @@ import BackgroundDecor from "@/components/background-decor"
 import LoginModal from "@/components/login-modal"
 import MusicPlayer from "@/components/music-player"
 import StorageStatus from "@/components/storage-status"
+import OurVault from "@/components/our-vault"
+import { Role } from "@/src/types/Role"
 
 const titleFont = Pacifico({
   weight: "400",
@@ -26,6 +28,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
+  const [currentUser, setCurrentUser] = useState<Role>(Role.DADDY)
 
   useEffect(() => {
     try {
@@ -50,9 +53,10 @@ export default function Page() {
     setShowLogin(true)
   }
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (userRole: Role) => {
     setIsAuthenticated(true)
     setShowLogin(false)
+    setCurrentUser(userRole)
   }
 
   const handleLogout = () => {
@@ -128,6 +132,9 @@ export default function Page() {
           <div className="w-full lg:w-1/4 flex flex-col gap-4">
             <div>
               <WishList language={language} />
+            </div>
+            <div>
+              <OurVault language={language} currentUser={currentUser} />
             </div>
             <div className="flex-grow">
               <PhotoWall language={language} />
