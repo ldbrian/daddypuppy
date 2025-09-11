@@ -68,10 +68,11 @@ async function loadJSONServer<T>(key: string, fallback: T): Promise<T> {
 
     const result = await response.json()
 
-    if (result.success && result.data !== null && result.data !== undefined) {
+    // 修复：根据API实际响应格式处理数据
+    if (result !== null && result !== undefined) {
       // 同步到本地存储作为缓存
-      saveJSONLocal(key, result.data)
-      return result.data as T
+      saveJSONLocal(key, result)
+      return result as T
     }
 
     return fallback

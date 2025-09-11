@@ -217,23 +217,27 @@ export default function MusicPlayer({ language = "zh" }: { language?: Language }
   }
 
   const addSong = async (title: string, artist: string, url: string) => {
-    // 简单验证URL
+    // 验证URL
     if (!url || !url.startsWith('http')) {
       setError(currentT.invalidUrl)
       return
     }
 
+    // 创建新歌曲对象，初始化duration为0
     const newSong: Song = {
       id: Date.now().toString(),
       title,
       artist,
       url,
-      duration: 0, // 将在播放时获取实际时长
+      duration: 0, // 实际时长将在播放时获取
     }
 
+    // 更新歌曲列表并保存到存储
     const updatedSongs = [...songs, newSong]
     setSongs(updatedSongs)
     await saveSongs(updatedSongs)
+    
+    // 关闭添加歌曲对话框并清除错误
     setShowAddSong(false)
     setError(null)
   }
