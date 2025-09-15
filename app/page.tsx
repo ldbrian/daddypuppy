@@ -110,22 +110,16 @@ export default function Page() {
             <Languages className="h-5 w-5" />
           </Button>
           
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogin}
-            className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
-          >
-            <NotebookPen className="h-5 w-5" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
-          >
-            <Camera className="h-5 w-5" />
-          </Button>
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
+            >
+              <NotebookPen className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </header>
 
