@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Pacifico } from "next/font/google"
-import { Languages, NotebookPen, Camera } from "lucide-react"
+import { Languages, NotebookPen, Camera, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getLanguageFromStorage, setLanguageToStorage } from "@/lib/i18n"
 import type { Language, Identity } from "@/lib/types"
@@ -119,7 +119,7 @@ export default function Page() {
               onClick={handleLogout}
               className="text-pink-600 hover:text-pink-700 hover:bg-pink-50"
             >
-              <NotebookPen className="h-5 w-5" />
+              <LogOut className="h-5 w-5" />
             </Button>
           )}
         </div>
