@@ -41,6 +41,9 @@ export default function Page() {
       const authenticated = localStorage.getItem("memoir_authenticated") === "true"
       if (authenticated) {
         setIsAuthenticated(true)
+      } else {
+        // 如果未认证，显示登录模态框
+        setShowLogin(true)
       }
       
       // 获取保存的用户角色
