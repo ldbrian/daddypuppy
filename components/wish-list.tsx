@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import PlayfulCard from "@/components/playful-card"
 import { loadJSON, saveJSON } from "@/lib/storage"
-import type { Language } from "@/lib/types"
+import type { Language, Identity } from "@/lib/types"
 
 interface TodoItem {
   id: string
@@ -21,7 +21,13 @@ interface TodoItem {
   createdAt: string
 }
 
-export default function WishList({ language = "zh" }: { language?: Language }) {
+export default function WishList({ 
+  language = "zh",
+  currentUser = "daddy" // 添加currentUser属性
+}: { 
+  language?: Language,
+  currentUser?: Identity // 添加currentUser类型
+}) {
   const [todos, setTodos] = useState<TodoItem[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null)

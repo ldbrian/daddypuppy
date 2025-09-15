@@ -6,10 +6,11 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { Heart, Lock, Eye, EyeOff, Clock, Shield } from "lucide-react"
+import { Heart, Lock, Eye, EyeOff, Clock, Shield, User, Baby } from "lucide-react"
 import { Pacifico } from "next/font/google"
 import { cn } from "@/lib/utils"
 import type { Language } from "@/lib/types"
+import { Role } from "@/src/types/Role"
 
 const titleFont = Pacifico({
   weight: "400",
@@ -23,7 +24,7 @@ const LOCKOUT_DURATION = 30 * 60 * 1000 // 30分钟
 
 interface LoginModalProps {
   isOpen: boolean
-  onLogin: () => void
+  onLogin: (userRole: Role) => void // 修改登录回调函数签名
   language?: Language
 }
 
@@ -38,6 +39,7 @@ export default function LoginModal({ isOpen, onLogin, language = "zh" }: LoginMo
   const [isShaking, setIsShaking] = useState(false)
   const [lockoutInfo, setLockoutInfo] = useState<LockoutInfo>({ attempts: 0, lockedUntil: null })
   const [remainingTime, setRemainingTime] = useState(0)
+  const [selectedRole, setSelectedRole] = useState<Role>(Role.DADDY) // 添加身份选择状态
   const inputRef = useRef<HTMLInputElement>(null)
 
   const t =
@@ -56,6 +58,9 @@ export default function LoginModal({ isOpen, onLogin, language = "zh" }: LoginMo
           minutes: "分钟",
           seconds: "秒",
           attemptsLeft: "剩余尝试次数",
+          selectIdentity: "选择身份",
+          daddy: "Daddy",
+          puppy: "Puppy"
         }
       : {
           title: "Daddy & Puppy",
@@ -71,6 +76,9 @@ export default function LoginModal({ isOpen, onLogin, language = "zh" }: LoginMo
           minutes: "minutes",
           seconds: "seconds",
           attemptsLeft: "Attempts left",
+          selectIdentity: "Select Identity",
+          daddy: "Daddy",
+          puppy: "Puppy"
         }
 
   // 加载锁定信息
@@ -137,7 +145,8 @@ export default function LoginModal({ isOpen, onLogin, language = "zh" }: LoginMo
       setLockoutInfo(resetInfo)
       localStorage.setItem("memoir_lockout", JSON.stringify(resetInfo))
       localStorage.setItem("memoir_authenticated", "true")
-      onLogin()
+      // 传递选择的用户角色
+      onLogin(selectedRole)
     } else {
       // 密码错误
       const newAttempts = lockoutInfo.attempts + 1
@@ -285,6 +294,43 @@ export default function LoginModal({ isOpen, onLogin, language = "zh" }: LoginMo
                 <span>⚠️</span>
                 {t.wrongPassword} ({t.attemptsLeft}: {MAX_ATTEMPTS - lockoutInfo.attempts})
               </p>
+            </div>
+          )}
+
+          {/* 身份选择 */}
+          {!isLocked && (
+            <div className="mb-4">
+              <p className="text-sm text-neutral-700 mb-2 font-medium">{t.selectIdentity}</p>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  type="button"
+                  variant={selectedRole === Role.DADDY ? "default" : "outline"}
+                  onClick={() => setSelectedRole(Role.DADDY)}
+                  className={cn(
+                    "flex-1 transition-all",
+                    selectedRole === Role.DADDY
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "border-blue-200 text-blue-700 hover:bg-blue-50"
+                  )}
+                >
+                  <User className="size-4 mr-1" />
+                  {t.daddy}
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedRole === Role.PUPPY ? "default" : "outline"}
+                  onClick={() => setSelectedRole(Role.PUPPY)}
+                  className={cn(
+                    "flex-1 transition-all",
+                    selectedRole === Role.PUPPY
+                      ? "bg-pink-600 hover:bg-pink-700 text-white"
+                      : "border-pink-200 text-pink-700 hover:bg-pink-50"
+                  )}
+                >
+                  <Baby className="size-4 mr-1" />
+                  {t.puppy}
+                </Button>
+              </div>
             </div>
           )}
 

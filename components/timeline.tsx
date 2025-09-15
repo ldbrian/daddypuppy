@@ -181,10 +181,12 @@ export default function Timeline({
   memoriesKey = "memoir_memories",
   moodsKey = "memoir_moods",
   language = "zh",
+  currentUser = "daddy" // 添加currentUser属性，默认为daddy
 }: {
   memoriesKey?: string
   moodsKey?: string
   language?: Language
+  currentUser?: Identity // 添加currentUser类型
 } = {}) {
   const [memories, setMemories] = useState<MemoryEntry[]>([])
   const [moods, setMoods] = useState<MoodMap>({})
@@ -194,7 +196,7 @@ export default function Timeline({
     title: "",
     text: "",
     imageUrl: "",
-    identity: "daddy", // 默认身份为daddy
+    identity: currentUser, // 默认身份设置为当前用户
   })
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null)
@@ -479,7 +481,7 @@ export default function Timeline({
 
       const newCommentObj: Comment = {
         id: generateId(),
-        identity: "daddy", // 默认为daddy，实际应用中应根据当前用户身份设置
+        identity: currentUser, // 使用当前用户身份
         text: commentText,
         createdAt: Date.now(),
       }

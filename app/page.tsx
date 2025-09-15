@@ -6,7 +6,7 @@ import { Pacifico } from "next/font/google"
 import { Languages, NotebookPen, Camera } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getLanguageFromStorage, setLanguageToStorage } from "@/lib/i18n"
-import type { Language } from "@/lib/types"
+import type { Language, Identity } from "@/lib/types"
 import Timeline from "@/components/timeline"
 import MoodCalendar from "@/components/mood-calendar"
 import WishList from "@/components/wish-list"
@@ -28,13 +28,25 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
-  const [currentUser, setCurrentUser] = useState<Role>(Role.DADDY)
+  const [currentUser, setCurrentUser] = useState<Identity>("daddy")
 
   useEffect(() => {
     try {
       const storedLanguage = getLanguageFromStorage()
       if (storedLanguage) {
         setLanguage(storedLanguage)
+      }
+      
+      // 检查是否已经认证
+      const authenticated = localStorage.getItem("memoir_authenticated") === "true"
+      if (authenticated) {
+        setIsAuthenticated(true)
+      }
+      
+      // 获取保存的用户角色
+      const savedUserRole = localStorage.getItem("memoir_user_role") as Identity
+      if (savedUserRole) {
+        setCurrentUser(savedUserRole)
       }
     } catch (error) {
       console.error("Failed to load language preference:", error)
@@ -56,11 +68,18 @@ export default function Page() {
   const handleLoginSuccess = (userRole: Role) => {
     setIsAuthenticated(true)
     setShowLogin(false)
-    setCurrentUser(userRole)
+    // 将Role类型转换为Identity类型
+    const identity: Identity = userRole === Role.DADDY ? "daddy" : "puppy"
+    setCurrentUser(identity)
+    // 保存用户角色到localStorage
+    localStorage.setItem("memoir_user_role", identity)
   }
 
   const handleLogout = () => {
     setIsAuthenticated(false)
+    // 清除认证状态和用户角色
+    localStorage.removeItem("memoir_authenticated")
+    localStorage.removeItem("memoir_user_role")
   }
 
   if (isLoading) {
@@ -116,7 +135,7 @@ export default function Page() {
           {/* 左侧栏 */}
           <div className="w-full lg:w-1/4 flex flex-col gap-4">
             <div>
-              <MoodCalendar language={language} />
+              <MoodCalendar language={language} currentUser={currentUser} />
             </div>
             <div className="flex-grow">
               <MusicPlayer language={language} />
@@ -125,16 +144,16 @@ export default function Page() {
           
           {/* 中间内容区 */}
           <div className="w-full lg:w-1/2">
-            <Timeline language={language} />
+            <Timeline language={language} currentUser={currentUser} />
           </div>
           
           {/* 右侧栏 */}
           <div className="w-full lg:w-1/4 flex flex-col gap-4">
             <div>
-              <WishList language={language} />
+              <WishList language={language} currentUser={currentUser} />
             </div>
             <div>
-              <OurVault language={language} currentUser={currentUser} />
+              <OurVault language={language} currentUser={currentUser === "daddy" ? Role.DADDY : Role.PUPPY} />
             </div>
             <div className="flex-grow">
               <PhotoWall language={language} />

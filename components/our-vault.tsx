@@ -414,7 +414,7 @@ export default function OurVault({
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="CNY">{currentT.cny}</SelectItem>
                   <SelectItem value="IDR">{currentT.idr}</SelectItem>
                 </SelectContent>

@@ -19,10 +19,16 @@ const MOODS = {
 
 type Identity = "daddy" | "puppy"
 
-export default function MoodCalendar({ language = "zh" }: { language?: Language }) {
+export default function MoodCalendar({ 
+  language = "zh",
+  currentUser = "daddy" // 添加currentUser属性
+}: { 
+  language?: Language,
+  currentUser?: Identity // 添加currentUser类型
+}) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [moods, setMoods] = useState<Record<string, DualMood>>({})
-  const [selectedIdentity, setSelectedIdentity] = useState<Identity>("daddy")
+  const [selectedIdentity, setSelectedIdentity] = useState<Identity>(currentUser) // 默认使用当前用户身份
   const [isLoading, setIsLoading] = useState(true)
 
   const t = useMemo(() => {
