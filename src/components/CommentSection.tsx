@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Role } from '../types/Role';
-import { Comment } from '../types/Comment';
+import { Identity } from '../../lib/types'; // 更改导入路径和类型
+import { Comment } from '../../lib/types'; // 更改导入路径
 
 interface CommentSectionProps {
   memoryId: string;
-  comments: Comment[];
+  comments: Comment[]; // 更新类型引用
   onAddComment: (comment: Omit<Comment, 'id' | 'createdAt'>) => void;
 }
 
@@ -14,14 +14,13 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   onAddComment
 }) => {
   const [content, setContent] = useState('');
-  const [role, setRole] = useState<Role>(Role.DADDY);
+  const [identity, setIdentity] = useState<Identity>('daddy'); // 更改状态类型和名称
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onAddComment({
-      content,
-      memoryId,
-      role
+      text: content, // 更改字段名content为text
+      identity // 更改字段名role为identity
     });
     setContent('');
   };
@@ -32,18 +31,18 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
         {comments.map(comment => (
           <div key={comment.id} className="comment">
             <div className="comment-header">
-              <span className="role">{comment.role}</span>
-              <span className="date">{comment.createdAt.toLocaleDateString()}</span>
+              <span className="role">{comment.identity}</span> {/* 更改字段名 */}
+              <span className="date">{new Date(comment.createdAt).toLocaleDateString()}</span> {/* 修复日期显示 */}
             </div>
-            <p>{comment.content}</p>
+            <p>{comment.text}</p> {/* 更改字段名content为text */}
           </div>
         ))}
       </div>
       
       <form onSubmit={handleSubmit}>
-        <select value={role} onChange={e => setRole(e.target.value as Role)}>
-          <option value={Role.DADDY}>Daddy</option>
-          <option value={Role.PUPPY}>Puppy</option>
+        <select value={identity} onChange={e => setIdentity(e.target.value as Identity)}> {/* 更改状态变量名 */}
+          <option value="daddy">Daddy</option>
+          <option value="puppy">Puppy</option>
         </select>
         <textarea
           value={content}
