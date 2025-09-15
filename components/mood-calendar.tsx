@@ -28,7 +28,6 @@ export default function MoodCalendar({
 }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [moods, setMoods] = useState<Record<string, DualMood>>({})
-  const [selectedIdentity, setSelectedIdentity] = useState<Identity>(currentUser) // 默认使用当前用户身份
   const [isLoading, setIsLoading] = useState(true)
 
   const t = useMemo(() => {
@@ -92,19 +91,22 @@ export default function MoodCalendar({
     }
   }
 
+  // 修改setMood函数，直接使用currentUser而不是selectedIdentity
   const setMood = async (date: string, mood: MoodKey) => {
-    const currentMood = moods[date] || {}
-    const newMood: DualMood = {
-      ...currentMood,
-      [selectedIdentity]: mood,
+    try {
+      const newMoods = {
+        ...moods,
+        [date]: {
+          ...(moods[date] || {}),
+          [currentUser]: mood, // 使用currentUser而不是selectedIdentity
+        },
+      }
+      
+      setMoods(newMoods)
+      await saveJSON("memoir_moods", newMoods)
+    } catch (error) {
+      console.error("Failed to save mood:", error)
     }
-
-    const newMoods = {
-      ...moods,
-      [date]: newMood,
-    }
-    setMoods(newMoods)
-    await saveMoods(newMoods)
   }
 
   const formatDate = (date: Date) => {
@@ -170,197 +172,190 @@ export default function MoodCalendar({
     month: "long",
   })
 
+  // 创建单独的日期生成函数
+  const getCalendarDays = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startingDayOfWeek = firstDay.getDay()
+
+    const days = []
+
+    // 添加上个月的日期填充
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const prevDate = new Date(year, month, -i)
+      days.push(prevDate)
+    }
+
+    // 添加当前月的日期
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(year, month, day)
+      days.push(currentDate)
+    }
+
+    // 添加下个月的日期填充
+    const remainingDays = 42 - days.length // 6 rows × 7 days
+    for (let day = 1; day <= remainingDays; day++) {
+      const nextDate = new Date(year, month + 1, day)
+      days.push(nextDate)
+    }
+
+    return days
+  }
+
+  // 辅助函数用于比较两个日期是否相同
+  const isSameDay = (date1: Date, date2: Date) => {
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    )
+  }
+
+  // 修改渲染日历的函数，移除身份切换逻辑
+  const renderCalendar = () => {
+    // 获取星期几的缩写（周一到周日）
+    const weekDays = language === "zh" 
+      ? ["一", "二", "三", "四", "五", "六", "日"] 
+      : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+    const calendarDays = getCalendarDays(currentDate).map((date, index) => {
+      const isCurrentMonth = date.getMonth() === currentDate.getMonth()
+      const dateStr = formatDate(date)
+      const dualMood = moods[dateStr]
+      const dayIsToday = isSameDay(date, new Date())
+
+      // 获取当前用户的心情
+      const userMood = dualMood?.[currentUser] ? MOODS[dualMood[currentUser]!] : null
+
+      return (
+        <div key={index} className="relative">
+          <button
+            onClick={() => {
+              if (isCurrentMonth) {
+                // 循环切换当前用户的心情
+                const moodKeys = Object.keys(MOODS) as MoodKey[]
+                const currentMoodIndex = userMood ? moodKeys.indexOf(dualMood![currentUser]!) : -1
+                const nextMoodIndex = (currentMoodIndex + 1) % moodKeys.length
+                setMood(dateStr, moodKeys[nextMoodIndex])
+              }
+            }}
+            className={`w-8 h-8 text-xs rounded-md transition-all relative overflow-hidden ${
+              isCurrentMonth
+                ? dayIsToday
+                  ? "bg-pink-100 border-2 border-pink-400 text-pink-700 font-bold"
+                  : "hover:bg-neutral-100 text-neutral-700"
+                : "text-neutral-300"
+            } ${userMood ? userMood.color + " text-white hover:opacity-80" : ""}`}
+            disabled={!isCurrentMonth}
+          >
+            {/* 日期数字 */}
+            <span className="relative z-10">{date.getDate()}</span>
+
+            {/* 用户心情显示 */}
+            {userMood && (
+              <div
+                className="absolute inset-0 flex items-center justify-center z-10"
+                style={{
+                  background: `linear-gradient(135deg, ${
+                    userMood.color.replace("bg-", "").includes("emerald")
+                      ? "#10b981"
+                      : userMood.color.replace("bg-", "").includes("green")
+                        ? "#4ade80"
+                        : userMood.color.replace("bg-", "").includes("yellow")
+                          ? "#facc15"
+                          : userMood.color.replace("bg-", "").includes("orange")
+                            ? "#fb923c"
+                            : "#ef4444"
+                  }, transparent)`,
+                }}
+              >
+                <span className="text-lg relative z-20">{userMood.emoji}</span>
+              </div>
+            )}
+          </button>
+        </div>
+      )
+    })
+
+    return (
+      <div className="grid grid-cols-7 gap-1">
+        {weekDays.map((day) => (
+          <div key={day} className="text-center text-xs text-neutral-500 py-1">
+            {day}
+          </div>
+        ))}
+        {calendarDays}
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
-      <PlayfulCard tiltSeed="moodcalendar" className="p-4">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-neutral-500 text-sm">{language === "zh" ? "加载中..." : "Loading..."}</div>
+      <PlayfulCard className="p-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-pink-500"></div>
         </div>
       </PlayfulCard>
     )
   }
 
   return (
-    <PlayfulCard tiltSeed="moodcalendar" className="p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Calendar className="size-4 text-pink-600" />
-        <h3 className="font-semibold tracking-wide">{t.mood.title}</h3>
-      </div>
-
-      {/* 身份选择 */}
-      <div className="mb-4">
-        <div className="text-xs text-neutral-600 mb-2">{t.mood.selectIdentity}</div>
-        <div className="flex gap-2">
+    <PlayfulCard className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-neutral-800 flex items-center gap-2">
+          <Calendar className="size-4 text-pink-500" />
+          {t.mood.title}
+        </h3>
+        <div className="flex gap-1">
           <Button
-            variant={selectedIdentity === "daddy" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedIdentity("daddy")}
-            className={
-              selectedIdentity === "daddy"
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "border-blue-200 text-blue-700 hover:bg-blue-50 bg-transparent"
-            }
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1))}
+            className="h-7 w-7 text-neutral-600 hover:bg-neutral-100"
           >
-            <User className="size-3 mr-1" />
-            {t.mood.daddy}
+            <ChevronLeft className="size-4" />
           </Button>
           <Button
-            variant={selectedIdentity === "puppy" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedIdentity("puppy")}
-            className={
-              selectedIdentity === "puppy"
-                ? "bg-pink-600 hover:bg-pink-700 text-white"
-                : "border-pink-200 text-pink-700 hover:bg-pink-50 bg-transparent"
-            }
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentDate(new Date())}
+            className="h-7 w-7 text-neutral-600 hover:bg-neutral-100"
           >
-            <Heart className="size-3 mr-1" />
-            {t.mood.puppy}
+            {t.mood.today}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1))}
+            className="h-7 w-7 text-neutral-600 hover:bg-neutral-100"
+          >
+            <ChevronRight className="size-4" />
           </Button>
         </div>
       </div>
 
-      {/* 月份导航 */}
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="ghost" size="sm" onClick={() => navigateMonth("prev")} aria-label={t.mood.prevMonth}>
-          <ChevronLeft className="size-4" />
-        </Button>
-        <h4 className="font-medium text-sm">{monthName}</h4>
-        <Button variant="ghost" size="sm" onClick={() => navigateMonth("next")} aria-label={t.mood.nextMonth}>
-          <ChevronRight className="size-4" />
-        </Button>
-      </div>
+      {renderCalendar()}
 
-      {/* 星期标题 */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {["日", "一", "二", "三", "四", "五", "六"].map((day, index) => (
-          <div key={index} className="text-center text-xs font-medium text-neutral-500 p-1">
-            {language === "zh" ? day : ["S", "M", "T", "W", "T", "F", "S"][index]}
-          </div>
-        ))}
-      </div>
+      <Separator className="my-4" />
 
-      {/* 日历网格 */}
-      <div className="grid grid-cols-7 gap-1 mb-4">
-        {monthDays.map(({ date, isCurrentMonth }, index) => {
-          const dateStr = formatDate(date)
-          const dualMood = moods[dateStr]
-          const dayIsToday = isToday(date)
-
-          // 获取两人的心情
-          const daddyMood = dualMood?.daddy ? MOODS[dualMood.daddy] : null
-          const puppyMood = dualMood?.puppy ? MOODS[dualMood.puppy] : null
-          const currentUserMood = dualMood?.[selectedIdentity] ? MOODS[dualMood[selectedIdentity]!] : null
-
-          return (
-            <div key={index} className="relative">
-              <button
-                onClick={() => {
-                  if (isCurrentMonth) {
-                    // 循环切换当前选中身份的心情
-                    const moodKeys = Object.keys(MOODS) as MoodKey[]
-                    const currentMoodIndex = currentUserMood ? moodKeys.indexOf(dualMood![selectedIdentity]!) : -1
-                    const nextMoodIndex = (currentMoodIndex + 1) % moodKeys.length
-                    setMood(dateStr, moodKeys[nextMoodIndex])
-                  }
-                }}
-                className={`w-8 h-8 text-xs rounded-md transition-all relative overflow-hidden ${
-                  isCurrentMonth
-                    ? dayIsToday
-                      ? "bg-pink-100 border-2 border-pink-400 text-pink-700 font-bold"
-                      : "hover:bg-neutral-100 text-neutral-700"
-                    : "text-neutral-300"
-                } ${currentUserMood ? currentUserMood.color + " text-white hover:opacity-80" : ""}`}
-                disabled={!isCurrentMonth}
-              >
-                {/* 日期数字 */}
-                <span className="relative z-10">{date.getDate()}</span>
-
-                {/* 双人心情显示 */}
-                {(daddyMood || puppyMood) && (
-                  <div className="absolute inset-0 flex">
-                    {/* Daddy的心情（左半边） */}
-                    {daddyMood && (
-                      <div
-                        className={`w-1/2 h-full flex items-center justify-center ${
-                          selectedIdentity === "daddy" ? "z-20" : "z-10"
-                        }`}
-                        style={{
-                          background: `linear-gradient(135deg, ${
-                            daddyMood.color.replace("bg-", "").includes("emerald")
-                              ? "#10b981"
-                              : daddyMood.color.replace("bg-", "").includes("green")
-                                ? "#4ade80"
-                                : daddyMood.color.replace("bg-", "").includes("yellow")
-                                  ? "#facc15"
-                                  : daddyMood.color.replace("bg-", "").includes("orange")
-                                    ? "#fb923c"
-                                    : "#ef4444"
-                          }, transparent)`,
-                        }}
-                      >
-                        <span className="text-xs">{daddyMood.emoji}</span>
-                      </div>
-                    )}
-
-                    {/* Puppy的心情（右半边） */}
-                    {puppyMood && (
-                      <div
-                        className={`w-1/2 h-full flex items-center justify-center ml-auto ${
-                          selectedIdentity === "puppy" ? "z-20" : "z-10"
-                        }`}
-                        style={{
-                          background: `linear-gradient(225deg, ${
-                            puppyMood.color.replace("bg-", "").includes("emerald")
-                              ? "#10b981"
-                              : puppyMood.color.replace("bg-", "").includes("green")
-                                ? "#4ade80"
-                                : puppyMood.color.replace("bg-", "").includes("yellow")
-                                  ? "#facc15"
-                                  : puppyMood.color.replace("bg-", "").includes("orange")
-                                    ? "#fb923c"
-                                    : "#ef4444"
-                          }, transparent)`,
-                        }}
-                      >
-                        <span className="text-xs">{puppyMood.emoji}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 当前选中身份的高亮边框 */}
-                {currentUserMood && (
-                  <div
-                    className={`absolute inset-0 border-2 rounded-md ${
-                      selectedIdentity === "daddy" ? "border-blue-400" : "border-pink-400"
-                    } opacity-60`}
-                  />
-                )}
-              </button>
-            </div>
-          )
-        })}
-      </div>
-
-      <Separator className="my-3 bg-neutral-200" />
-
-      {/* 心情选择区域 */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-medium text-neutral-600">
-            {selectedIdentity === "daddy" ? t.mood.daddy : t.mood.puppy}
+            {currentUser === "daddy" ? t.mood.daddy : t.mood.puppy}
             {t.mood.yourMood}
           </h4>
           <Badge
             variant="outline"
             className={
-              selectedIdentity === "daddy"
+              currentUser === "daddy"
                 ? "border-blue-200 text-blue-700 bg-blue-50"
                 : "border-pink-200 text-pink-700 bg-pink-50"
             }
           >
-            {selectedIdentity === "daddy" ? t.mood.daddy : t.mood.puppy}
+            {currentUser === "daddy" ? t.mood.daddy : t.mood.puppy}
           </Badge>
         </div>
 
@@ -380,37 +375,26 @@ export default function MoodCalendar({
           ))}
         </div>
 
-        {/* 今日双人心情显示 */}
+        {/* 今日心情显示 */}
         {(() => {
           const today = formatDate(new Date())
           const todayMood = moods[today]
-          if (todayMood && (todayMood.daddy || todayMood.puppy)) {
+          if (todayMood && todayMood[currentUser]) {
             return (
               <div className="mt-3 p-3 bg-neutral-50 rounded-lg">
                 <div className="text-xs font-medium text-neutral-600 mb-2">{t.mood.today}</div>
                 <div className="flex items-center gap-3">
-                  {todayMood.daddy && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
-                        {t.mood.daddy}
-                      </Badge>
-                      <span className="text-lg">{MOODS[todayMood.daddy].emoji}</span>
-                      <span className="text-xs text-neutral-600">
-                        {language === "zh" ? MOODS[todayMood.daddy].name : MOODS[todayMood.daddy].nameEn}
-                      </span>
-                    </div>
-                  )}
-                  {todayMood.puppy && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="border-pink-200 text-pink-700 bg-pink-50">
-                        {t.mood.puppy}
-                      </Badge>
-                      <span className="text-lg">{MOODS[todayMood.puppy].emoji}</span>
-                      <span className="text-xs text-neutral-600">
-                        {language === "zh" ? MOODS[todayMood.puppy].name : MOODS[todayMood.puppy].nameEn}
-                      </span>
-                    </div>
-                  )}
+                  <Badge variant="outline" className={
+                    currentUser === "daddy"
+                      ? "border-blue-200 text-blue-700 bg-blue-50"
+                      : "border-pink-200 text-pink-700 bg-pink-50"
+                  }>
+                    {currentUser === "daddy" ? t.mood.daddy : t.mood.puppy}
+                  </Badge>
+                  <span className="text-lg">{MOODS[todayMood[currentUser]].emoji}</span>
+                  <span className="text-xs text-neutral-600">
+                    {language === "zh" ? MOODS[todayMood[currentUser]].name : MOODS[todayMood[currentUser]].nameEn}
+                  </span>
                 </div>
               </div>
             )

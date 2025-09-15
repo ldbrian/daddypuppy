@@ -80,6 +80,8 @@ export default function Page() {
     // 清除认证状态和用户角色
     localStorage.removeItem("memoir_authenticated")
     localStorage.removeItem("memoir_user_role")
+    // 显示登录模态框
+    setShowLogin(true)
   }
 
   if (isLoading) {

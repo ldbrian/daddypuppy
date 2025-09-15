@@ -1020,7 +1020,13 @@ export default function Timeline({
                 variant="outline"
                 onClick={() => {
                   setShowCreateDialog(false)
-                  setForm({ date: new Date().toISOString().slice(0, 10), title: "", text: "", imageUrl: "", identity: "daddy" })
+                  setForm({ 
+                    date: new Date().toISOString().slice(0, 10), 
+                    title: "", 
+                    text: "", 
+                    imageUrl: "", 
+                    identity: currentUser // 使用currentUser而不是固定值"daddy"
+                  })
                 }}
                 className="flex-1 border-neutral-300 text-neutral-700 hover:bg-neutral-50"
               >
