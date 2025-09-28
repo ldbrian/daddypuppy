@@ -26,6 +26,7 @@ export default function PhotoWall({
   const [deleteMode, setDeleteMode] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [fileError, setFileError] = useState<string | null>(null) // 添加文件错误状态
 
   const t = useMemo(() => {
     if (language === "zh") {
@@ -176,6 +177,21 @@ export default function PhotoWall({
 
   const addFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return
+
+    // 清除之前的错误信息
+    setFileError(null);
+
+    // 检查文件大小限制 (1MB)
+    const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > maxSize) {
+        const errorMessage = language === "zh" 
+          ? `图片"${files[i].name}"大小超过1MB限制，请压缩后重新上传` 
+          : `Image "${files[i].name}" exceeds 1MB limit, please compress and try again`;
+        setFileError(errorMessage);
+        return;
+      }
+    }
 
     try {
       console.log("Adding files:", files.length)
@@ -368,6 +384,12 @@ export default function PhotoWall({
           </Button>
         )}
       </div>
+
+      {fileError && (
+        <div className="mt-3 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+          {fileError}
+        </div>
+      )}
 
       {deleteMode && (
         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">

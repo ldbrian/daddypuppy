@@ -207,6 +207,7 @@ export default function Timeline({
   const [visibleSet, setVisibleSet] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [newComment, setNewComment] = useState<{[key: string]: string}>({}) // 为每个记忆存储新评论文本
+  const [fileError, setFileError] = useState<string | null>(null) // 添加文件错误状态
 
   const t = getTimelineText(language)
   const locale = language === "zh" ? zhCN : enUS
@@ -388,6 +389,21 @@ export default function Timeline({
 
   const addFileImages = (files: FileList | null, isCreate = false) => {
     if (!files || files.length === 0) return
+
+    // 清除之前的错误信息
+    setFileError(null);
+
+    // 检查文件大小限制 (1MB)
+    const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > maxSize) {
+        const errorMessage = language === "zh" 
+          ? `图片"${files[i].name}"大小超过1MB限制，请压缩后重新上传` 
+          : `Image "${files[i].name}" exceeds 1MB limit, please compress and try again`;
+        setFileError(errorMessage);
+        return;
+      }
+    }
 
     try {
       const readers = Array.from(files).map(
@@ -1013,6 +1029,11 @@ export default function Timeline({
                   <Images className="size-4" />
                 </Button>
               </div>
+              {fileError && (
+                <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                  {fileError}
+                </div>
+              )}
             </div>
             <div className="flex gap-3 pt-4">
               <Button
